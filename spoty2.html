@@ -1,0 +1,12 @@
+    {% extends 'webapp/header.html' %}
+
+    {% block content %}
+    <div class="container">
+        {% csrf_token %}
+
+    <h1>Entire Dictionary: {{ person }}</h1>
+    
+    <h2>{{text}}</h2>
+    </div>
+    
+    {% endblock %}

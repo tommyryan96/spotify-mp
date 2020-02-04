@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+<div id="map_canvas" style="width:100%; height:100%"></div>
+<div id="iframeHolder"></div>
+
+<button id="myBtn" class="button">Artist Search</button>
+
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    '<iframe src={% url 'home' %} height="500" width="500"></iframe>';
+</div>
+</div>
+    <style>
+.button {
+  background-color: #242f3e; 
+  border: none;
+  color: #90ee90;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin: 4px 2px;
+  cursor: pointer;
+ position: absolute;
+  left: 800px;
+  top: 0px;
+}
+
+.button1 {font-size: 30px;}
+      #map {
+        height: 100%;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #pac-input {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input:focus {
+        border-color: #4d90fe;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #target {
+        width: 345px;
+      }
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: #90ee90; /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #17263c;
+  margin: auto;
+  padding: 30px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+    </style>
+  </head>
+  <body>
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+    <script>
+
+
+      function initAutocomplete() {
+         var myOptions = {
+    center: new google.maps.LatLng(53.204905, -7.955524),
+    zoom: 3,
+      mapTypeId: 'roadmap'
+  };
+  var map = new google.maps.Map(document.getElementById("map_canvas"),{
+          center: {lat: 53.204905, lng: -7.955524},
+          zoom: 3,
+          styles: [
+            {elementType: 'geometry', stylers: [{color: '#90ee90'}]},
+            {elementType: 'labels.text.stroke', stylers: [{color: '#242f3e'}]},
+            {elementType: 'labels.text.fill', stylers: [{color: '#FFFFFF'}]},
+            {
+              featureType: 'administrative.locality',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#d59563'}]
+            },
+            {
+              featureType: 'poi',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#d59563'}]
+            },
+            {
+              featureType: 'poi.park',
+              elementType: 'geometry',
+              stylers: [{color: '#263c3f'}]
+            },
+            {
+              featureType: 'poi.park',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#6b9a76'}]
+            },
+            {
+              featureType: 'road',
+              elementType: 'geometry',
+              stylers: [{color: '#38414e'}]
+            },
+            {
+              featureType: 'road',
+              elementType: 'geometry.stroke',
+              stylers: [{color: '#212a37'}]
+            },
+            {
+              featureType: 'road',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#9ca5b3'}]
+            },
+            {
+              featureType: 'road.highway',
+              elementType: 'geometry',
+              stylers: [{color: '#746855'}]
+            },
+            {
+              featureType: 'road.highway',
+              elementType: 'geometry.stroke',
+              stylers: [{color: '#1f2835'}]
+            },
+            {
+              featureType: 'road.highway',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#f3d19c'}]
+            },
+            {
+              featureType: 'transit',
+              elementType: 'geometry',
+              stylers: [{color: '#2f3948'}]
+            },
+            {
+              featureType: 'transit.station',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#d59563'}]
+            },
+            {
+              featureType: 'water',
+              elementType: 'geometry',
+              stylers: [{color: '#17263c'}]
+            },
+            {
+              featureType: 'water',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#515c6d'}]
+            },
+            {
+              featureType: 'water',
+              elementType: 'labels.text.stroke',
+              stylers: [{color: '#17263c'}]
+            }
+          ]
+        }
+		);
+		
+		var Ireland = {lat: 53.350011, lng:  -6.260737};
+		var England = {lat: 51.743304, lng:  -0.603917};
+		var France = {lat: 48.856402, lng:  2.354395};
+		var Spain = {lat: 40.446734, lng:  -3.700110};
+		var America = {lat:40.347346, lng:-101.994930};
+		var Canada = {lat:57.908748, lng:-100.525130};
+       		var Andorra = {lat:42.742204, lng:1.480560};
+       		var Argentina = {lat:-34.999018, lng:-64.731764};
+       		var Austria = {lat:47.612883, lng:13.959137};
+       		var Australia = {lat:-26.684498, lng:134.382038};
+       		var Belgium = {lat:50.985408, lng:4.485755};
+       		var Bolivia = {lat:-16.977093, lng:-64.932539};
+       		var Brazil = {lat:-7.821053, lng:-54.658642};
+       		var Switzerland = {lat:47.442208, lng:8.484778};
+       		var Chile = {lat:-25.977589, lng:-71.853261};
+       		var Colombia = {lat:4.146066, lng:-73.747358};
+       		var Costarica = {lat:9.916188, lng:-84.185009};
+       		var Czechrep = {lat:50.277900, lng:14.555244};
+       		var Germany = {lat:52.654664, lng: 13.317016};
+       		var Denmark = {lat:31.752361, lng:35.218635};
+       		var Dominicanrep = {lat:28.536766, lng:77.229182};
+       		var Ecuador = {lat:64.137808, lng:-21.712529};
+       		var Estonia = {lat:41.872871, lng:12.477478};
+       		var Finland = {lat:54.702673, lng:25.286618};
+       		var Greece = {lat:56.941475, lng:24.116309};
+       		var Hongkong = {lat:43.739884, lng: 7.426995};
+       		var Honduras = {lat:35.882194, lng:14.450079};
+       		var Hungary = {lat:47.407831, lng:19.018391}
+       		var Indonesia = {lat:-6.353805, lng:106.825160};
+       		var Israel = {lat:31.752361, lng:35.218635};
+       		var India = {lat:28.536766, lng:77.229182};
+       		var Iceland = {lat:64.137808, lng:-21.712529};
+       		var Italy = {lat:41.872871, lng:12.477478};
+       		var Japan = {lat:35.745441, lng:139.754989};
+       		var Lithuania = {lat:54.702673, lng:25.286618};
+       		var Latvia = {lat:56.941475, lng:24.116309};
+       		var Monaco = {lat:43.739884, lng: 7.426995};
+       		var Malta = {lat:35.882194, lng:14.450079};
+       		var Mexico = {lat:19.215520, lng:-99.255001};
+       		var Malaysia = {lat:3.192167, lng:101.664743};
+       		var Nicaragua = {lat:12.092624, lng:-86.244938};
+       		var Netherlands = {lat:52.415476, lng:4.883340};
+       		var Norway = {lat:60.021897, lng:10.746823};
+       		var Newzealand = {lat:-41.102474, lng:174.940613};
+       		var Panama = {lat:8.984240, lng:-79.551002};
+       		var Peru = {lat:-12.057389, lng:-77.035576};
+       		var Philippines = {lat:14.601032, lng:121.009408};
+       		var Poland = {lat:52.224753, lng:21.012738};
+       		var Portugal = {lat:38.731344, lng: -9.151855};
+       		var Paraguay = {lat:-25.287633, lng:-57.565704};
+       		var Romania = {lat:44.429966, lng:26.099358};
+       		var Sweden = {lat:59.337146, lng:18.059687};
+       		var Singapore = {lat:1.349592, lng:103.863597};
+       		var Slovakia = {lat:48.176039, lng:17.133466};
+       		var Elsalvador = {lat:13.716426, lng:-89.223421};
+       		var Thailand = {lat:13.732041, lng:100.525529};
+       		var Turkey = {lat:39.954795, lng:32.838139};
+       		var Taiwan = {lat:24.987282, lng:121.552550};
+       		var Uruguay = {lat:-34.862418, lng:-56.162877};
+       		var Vietnam = {lat:13.679771, lng:100.499593};
+       		var Southafrica = {lat:-26.030179, lng: 27.706332};
+
+
+        var contentString = '<iframe scrolling="no" frameborder="0" allowTransparency="true" src="https://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&width=700&height=350&color=ff0000&layout=dark&size=medium&type=charts&id=0&title=All&app_id=1" width="700" height="350"></iframe>';
+        var contentString2 = '<iframe src="https://spotifycharts.com/regional/gb/daily/latest" height="500" width="500" ></iframe>';
+		var contentString3 = '<iframe src="https://spotifycharts.com/regional/fr/daily/latest" height="500" width="500" ></iframe>';
+		var contentString4 = ['<div id="tabs" style="background: #90ee90;text-align:Center;padding: 15px 9px;font-size: 16px;display: inline-block;">',
+'<nav style="list-style: none;padding: 0;margin: 0;">',
+  '<ul >',
+    '<li style= "display: inline;margin: 0 5px 0 0;color: green;"><a href="#tab-1" style= "color: black;">Charts </a></li>',
+    '<li><a href="#tab-2" style= "color: green;"><span>Artists</span></a></li>',
+    '<li><a href="#tab-3"><span>Genres</span></a></li>',
+  '</ul>',
+'</nav>',
+  '<div id="tab-1">',
+
+    '<iframe src="https://spotifycharts.com/regional/ie/daily/latest" height="500" width="500" ></iframe>',
+  '</div>',
+  '<div id="tab-2">',
+    '<iframe src="https://www.last.fm/tag/irish/artists"></iframe>',
+  '</div>',
+  '<div id="tab-3">',
+    '<iframe src="https://spotifycharts.com/regional/ie/daily/latest" height="500" width="500" ></iframe>',
+  '</div>',
+  '</div>',
+
+].join('')
+
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 1000
+        });
+
+        var marker = new google.maps.Marker({
+          position: Ireland,
+	 icon: "png/Ireland32.png",
+map: map
+    });
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+        });
+	
+		var infowindow2 = new google.maps.InfoWindow({
+          content: contentString2,
+          maxWidth: 1000
+        });
+		
+		var marker2 = new google.maps.Marker({
+          position: England,
+ icon:  'png/England32.png',
+          map: map
+        });
+		marker2.addListener('click', function () {
+    infowindow2.open(map, marker2);
+		});
+
+		var infowindow3 = new google.maps.InfoWindow({
+          content: contentString3,
+          maxWidth: 1000
+        });
+
+        var marker3 = new google.maps.Marker({
+          position: France,
+ icon:  'png/France32.png',
+          map: map
+        });
+        marker3.addListener('click', function() {
+          infowindow3.open(map, marker3);
+        });
+		
+		var infowindow4 = new google.maps.InfoWindow({
+          content: contentString4,
+          maxWidth: 1000
+        });
+		
+		var marker4 = new google.maps.Marker({
+          position: Spain,
+ icon:  'png/Spain32.png',
+          map: map
+        });
+		google.maps.event.addListener(marker4,'click', function () {
+    infowindow4.open(map, marker4);
+$("#tabs").tabs();
+});
+
+	var infowindow5 = new google.maps.InfoWindow({
+          content: contentString3,
+          maxWidth: 1000
+        });
+
+        var marker5 = new google.maps.Marker({
+          position: America,
+ icon:  'png/United-States64.png',
+          map: map
+        });
+        marker5.addListener('click', function() {
+          infowindow5.open(map, marker5);
+        });
+
+		var infowindow6 = new google.maps.InfoWindow({
+          content: contentString3,
+          maxWidth: 1000
+        });
+
+        var marker6 = new google.maps.Marker({
+          position: Canada,
+ icon:  'png/Canada64.png',
+          map: map
+        });
+        marker6.addListener('click', function() {
+          infowindow6.open(map, marker6);
+        });
+		
+		var marker7 = new google.maps.Marker({
+          position: Germany,
+ icon:  'png/Germany32.png',
+          map: map
+        });
+		marker7.addListener('click', function () {
+    infowindow2.open(map, marker7);
+		});
+		
+	var marker8 = new google.maps.Marker({
+          position: Belgium,
+ icon:  'png/Belgium32.png',
+          map: map
+        });
+		marker8.addListener('click', function () {
+    infowindow2.open(map, marker8);
+		});
+        // Create th
+
+var marker9 = new google.maps.Marker({
+          position: Switzerland,
+ icon:  'png/Switzerland32.png',
+          map: map
+        });
+		marker9.addListener('click', function () {
+    infowindow2.open(map, marker9);
+		});
+var marker10 = new google.maps.Marker({
+          position: Andorra,
+ icon:  'png/Andorra32.png',
+          map: map
+        });
+		marker10.addListener('click', function () {
+    infowindow2.open(map, marker10);
+		});
+var marker11 = new google.maps.Marker({
+          position: Australia,
+ icon:  'png/Australia32.png',
+          map: map
+        });
+		marker11.addListener('click', function () {
+    infowindow2.open(map, marker11);
+		});
+var marker12 = new google.maps.Marker({
+          position: Austria,
+ icon:  'png/Austria32.png',
+          map: map
+        });
+		marker12.addListener('click', function () {
+    infowindow2.open(map, marker12);
+		});
+var marker13 = new google.maps.Marker({
+          position: Argentina,
+ icon:  'png/Argentina32.png',
+          map: map
+        });
+		marker13.addListener('click', function () {
+    infowindow2.open(map, marker13);
+		});
+var marker14 = new google.maps.Marker({
+          position: Bolivia,
+ icon:  'png/Bolivia32.png',
+          map: map
+        });
+		marker14.addListener('click', function () {
+    infowindow2.open(map, marker14);
+		});
+var marker15 = new google.maps.Marker({
+          position: Chile,
+ icon:  'png/Chile32.png',
+          map: map
+        });
+		marker15.addListener('click', function () {
+    infowindow2.open(map, marker15);
+		});
+var marker16 = new google.maps.Marker({
+          position: Colombia,
+ icon:  'png/Colombia32.png',
+          map: map
+        });
+		marker16.addListener('click', function () {
+    infowindow2.open(map, marker16);
+		});
+var marker17 = new google.maps.Marker({
+          position: Costarica,
+ icon:  'png/Costa-Rica32.png',
+          map: map
+        });
+		marker17.addListener('click', function () {
+    infowindow2.open(map, marker17);
+		});
+var marker18 = new google.maps.Marker({
+          position: Czechrep,
+ icon:  'png/Czech32.png',
+          map: map
+        });
+		marker18.addListener('click', function () {
+    infowindow2.open(map, marker18);
+		});
+
+var marker19 = new google.maps.Marker({
+          position: Denmark,
+ icon:  'png/Denmark32.png',
+          map: map
+        });
+		marker19.addListener('click', function () {
+    infowindow2.open(map, marker19);
+		});
+var marker20 = new google.maps.Marker({
+          position: Dominicanrep,
+ icon:  'png/Dominica-Republic32.png',
+          map: map
+        });
+		marker20.addListener('click', function () {
+    infowindow2.open(map, marker20);
+		});
+var marker21 = new google.maps.Marker({
+          position: Ecuador,
+ icon:  'png/Ecuador32.png',
+          map: map
+        });
+		marker21.addListener('click', function () {
+    infowindow2.open(map, marker21);
+		});
+var marker22 = new google.maps.Marker({
+          position: Estonia,
+ icon:  'png/Estonia32.png',
+          map: map
+        });
+		marker22.addListener('click', function () {
+    infowindow2.open(map, marker22);
+		});
+var marker23 = new google.maps.Marker({
+          position: Finland,
+ icon:  'png/Finland32.png',
+          map: map
+        });
+		marker23.addListener('click', function () {
+    infowindow2.open(map, marker23);
+		});
+
+
+
+var marker24 = new google.maps.Marker({
+          position: Greece,
+ icon:  'png/Greece32.png',
+          map: map
+        });
+		marker24.addListener('click', function () {
+    infowindow2.open(map, marker24);
+		});
+var marker25 = new google.maps.Marker({
+          position: Hongkong,
+ icon:  'png/Hongkong32.png',
+          map: map
+        });
+		marker25.addListener('click', function () {
+    infowindow2.open(map, marker25);
+		});
+
+var marker26 = new google.maps.Marker({
+          position: Honduras,
+ icon:  'png/Honduras32.png',
+          map: map
+        });
+		marker26.addListener('click', function () {
+    infowindow2.open(map, marker26);
+		});
+var marker27 = new google.maps.Marker({
+          position: Hungary,
+ icon:  'png/Hungary32.png',
+          map: map
+        });
+		marker27.addListener('click', function () {
+    infowindow2.open(map, marker27);
+		});
+var marker28 = new google.maps.Marker({
+          position: Indonesia,
+ icon:  'png/Indonesia32.png',
+          map: map
+        });
+		marker28.addListener('click', function () {
+    infowindow2.open(map, marker28);
+		});
+var marker29 = new google.maps.Marker({
+          position: Israel,
+ icon:  'png/Israel32.png',
+          map: map
+        });
+		marker29.addListener('click', function () {
+    infowindow2.open(map, marker29);
+		});
+var marker30 = new google.maps.Marker({
+          position: India,
+ icon:  'png/India32.png',
+          map: map
+        });
+		marker30.addListener('click', function () {
+    infowindow2.open(map, marker30);
+		});
+
+var marker31 = new google.maps.Marker({
+          position: Iceland,
+ icon:  'png/Iceland32.png',
+          map: map
+        });
+		marker31.addListener('click', function () {
+    infowindow2.open(map, marker31);
+		});
+
+var marker32 = new google.maps.Marker({
+          position: Italy,
+ icon:  'png/Italy32.png',
+          map: map
+        });
+		marker32.addListener('click', function () {
+    infowindow2.open(map, marker32);
+		});
+var marker33 = new google.maps.Marker({
+          position: Japan,
+ icon:  'png/Japan32.png',
+          map: map
+        });
+		marker33.addListener('click', function () {
+    infowindow2.open(map, marker33);
+		});
+var marker33 = new google.maps.Marker({
+          position: Lithuania,
+ icon:  'png/Lithuania32.png',
+          map: map
+        });
+		marker33.addListener('click', function () {
+    infowindow2.open(map, marker33);
+		});
+var marker34 = new google.maps.Marker({
+          position: Latvia,
+ icon:  'png/Latvia32.png',
+          map: map
+        });
+		marker34.addListener('click', function () {
+    infowindow2.open(map, marker34);
+		});
+var marker35 = new google.maps.Marker({
+          position: Monaco,
+ icon:  'png/Monaco32.png',
+          map: map
+        });
+		marker35.addListener('click', function () {
+    infowindow2.open(map, marker35);
+		});
+
+
+	var marker36 = new google.maps.Marker({
+          position: Malta,
+ icon:  'png/Malta32.png',
+          map: map
+        });
+		marker36.addListener('click', function () {
+    infowindow2.open(map, marker36);
+		});
+
+var marker37 = new google.maps.Marker({
+          position: Mexico,
+ icon:  'png/Mexico32.png',
+          map: map
+        });
+		marker37.addListener('click', function () {
+    infowindow2.open(map, marker37);
+		});
+
+var marker38 = new google.maps.Marker({
+          position: Malaysia,
+ icon:  'png/Malaysia32.png',
+          map: map
+        });
+		marker38.addListener('click', function () {
+    infowindow2.open(map, marker38);
+		});
+var marker39 = new google.maps.Marker({
+          position: Nicaragua,
+ icon:  'png/Nicaragua32.png',
+          map: map
+        });
+		marker39.addListener('click', function () {
+    infowindow2.open(map, marker39);
+		});
+var marker40 = new google.maps.Marker({
+          position: Netherlands,
+ icon:  'png/Netherlands32.png',
+          map: map
+        });
+		marker40.addListener('click', function () {
+    infowindow2.open(map, marker40);
+		});
+var marker41 = new google.maps.Marker({
+          position: Norway,
+ icon:  'png/Norway32.png',
+          map: map
+        });
+		marker41.addListener('click', function () {
+    infowindow2.open(map, marker41);
+		});
+var marker42 = new google.maps.Marker({
+          position: Newzealand,
+ icon:  'png/New-Zealand32.png',
+          map: map
+        });
+		marker42.addListener('click', function () {
+    infowindow2.open(map, marker42);
+		});
+
+var marker43 = new google.maps.Marker({
+          position: Panama,
+ icon:  'png/Panama32.png',
+          map: map
+        });
+		marker43.addListener('click', function () {
+    infowindow2.open(map, marker43);
+		});
+
+var marker44 = new google.maps.Marker({
+          position: Peru,
+ icon:  'png/Peru32.png',
+          map: map
+        });
+		marker44.addListener('click', function () {
+    infowindow2.open(map, marker44);
+		});
+var marker45 = new google.maps.Marker({
+          position: Philippines,
+ icon:  'png/Philippines32.png',
+          map: map
+        });
+		marker45.addListener('click', function () {
+    infowindow2.open(map, marker45);
+		});
+var marker46 = new google.maps.Marker({
+          position: Poland,
+ icon:  'png/Poland32.png',
+          map: map
+        });
+		marker46.addListener('click', function () {
+    infowindow2.open(map, marker46);
+		});
+var marker47 = new google.maps.Marker({
+          position: Portugal,
+ icon:  'png/Portugal32.png',
+          map: map
+        });
+		marker47.addListener('click', function () {
+    infowindow2.open(map, marker47);
+		});
+var marker48 = new google.maps.Marker({
+          position: Paraguay,
+ icon:  'png/Paraguay32.png',
+          map: map
+        });
+		marker48.addListener('click', function () {
+    infowindow2.open(map, marker48);
+		});
+
+var marker49 = new google.maps.Marker({
+          position: Romania,
+ icon:  'png/Romania32.png',
+          map: map
+        });
+		marker49.addListener('click', function () {
+    infowindow2.open(map, marker49);
+		});
+var marker50 = new google.maps.Marker({
+          position: Sweden,
+ icon:  'png/Sweden32.png',
+          map: map
+        });
+		marker50.addListener('click', function () {
+    infowindow2.open(map, marker50);
+		});
+var marker51 = new google.maps.Marker({
+          position: Singapore,
+ icon:  'png/Singapore32.png',
+          map: map
+        });
+		marker51.addListener('click', function () {
+    infowindow2.open(map, marker51);
+		});
+
+var marker52 = new google.maps.Marker({
+          position: Slovakia,
+ icon:  'png/Slovakia32.png',
+          map: map
+        });
+		marker52.addListener('click', function () {
+    infowindow2.open(map, marker52);
+		});
+
+var marker53 = new google.maps.Marker({
+          position: Elsalvador,
+ icon:  'png/Elsalvador32.png',
+          map: map
+        });
+		marker53.addListener('click', function () {
+    infowindow2.open(map, marker53);
+		});
+var marker54 = new google.maps.Marker({
+          position: Thailand,
+ icon:  'png/Thailand32.png',
+          map: map
+        });
+		marker54.addListener('click', function () {
+    infowindow2.open(map, marker54);
+		});
+var marker55 = new google.maps.Marker({
+          position: Turkey,
+ icon:  'png/Turkey32.png',
+          map: map
+        });
+		marker55.addListener('click', function () {
+    infowindow2.open(map, marker55);
+		});
+var marker56 = new google.maps.Marker({
+          position: Taiwan,
+ icon:  'png/Taiwan32.png',
+          map: map
+        });
+		marker56.addListener('click', function () {
+    infowindow2.open(map, marker56);
+		});
+var marker57 = new google.maps.Marker({
+          position: Uruguay,
+ icon:  'png/Uruguay32.png',
+          map: map
+        });
+		marker57.addListener('click', function () {
+    infowindow2.open(map, marker57);
+		});
+var marker58 = new google.maps.Marker({
+          position: Vietnam,
+ icon:  'png/Vietnam32.png',
+          map: map
+        });
+		marker58.addListener('click', function () {
+    infowindow2.open(map, marker58);
+		});
+var marker59 = new google.maps.Marker({
+          position: Southafrica,
+ icon:  'png/South-Africa32.png',
+          map: map
+        });
+		marker59.addListener('click', function () {
+    infowindow2.open(map, marker59);
+		});
+
+        // Create the search box and link it to the UI element.
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          searchBox.setBounds(map.getBounds());
+        });
+
+        var markers = [];
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+           
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+      }
+var modal = document.getElementById("myModal");
+var btn = document.getElementById("myBtn");
+
+var span = document.getElementsByClassName("close")[0];
+
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCe8oJ24mhN1dx8cHybUgsoSzwpQwlWpkY&libraries=places&callback=initAutocomplete"
+         async defer></script>
+  </body>
+</html>

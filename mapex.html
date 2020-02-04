@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<div id="map_canvas" style="width:150%; height:100%"></div>
+<div id="iframeHolder"></div>
+    <button id="myBtn" class="button">Artist Search</button>
+
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    '<iframe src={% url 'home' %} height="800" width="1500"></iframe>';
+</div>
+</div>
+<script>
+          $(window).on("load",function(){
+          $(".loader-wrapper").fadeOut("slow");
+        });  </script>
+		
+<div class="loader-wrapper">
+    <span class="loader"><span class="loader-inner"></span></span>
+</div>
+
+{% load  static %}
+    <style>
+.button {
+  background-color: #242f3e; 
+  border: none;
+  color: #90ee90;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin: 4px 2px;
+  cursor: pointer;
+ position: absolute;
+  left: 800px;
+  top: 0px;
+}
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #pac-input {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input:focus {
+        border-color: #4d90fe;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #target {
+        width: 345px;
+      }
+      .modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: #90ee90; /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #17263c;
+  margin: auto;
+  padding: 30px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.loader-wrapper {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #242f3f;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+.loader {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  position: relative;
+  border: 4px solid #Fff;
+  animation: loader 2s infinite ease;
+}
+.loader-inner {
+  vertical-align: top;
+  display: inline-block;
+  width: 100%;
+  background-color: #fff;
+  animation: loader-inner 2s infinite ease-in;
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  
+  25% {
+    transform: rotate(180deg);
+  }
+  
+  50% {
+    transform: rotate(180deg);
+  }
+  
+  75% {
+    transform: rotate(360deg);
+  }
+  
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-inner {
+  0% {
+    height: 0%;
+  }
+  
+  25% {
+    height: 0%;
+  }
+  
+  50% {
+    height: 100%;
+  }
+  
+  75% {
+    height: 100%;
+  }
+  
+  100% {
+    height: 0%;
+  }
+}
+}
+    </style>
+  </head>
+  <body>
+  <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+    <script>
+	  
+      // This example adds a search box to a map, using the Google Place Autocomplete
+      // feature. People can enter geographical searches. The search box will return a
+      // pick list containing a mix of places and predicted search terms.
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      function initAutocomplete() {
+         var myOptions = {
+    center: new google.maps.LatLng(53.082908, 49.175744),
+    zoom: 3,
+      mapTypeId: 'roadmap'
+  };
+  var map = new google.maps.Map(document.getElementById("map_canvas"),{
+          center: {lat: 53.082908, lng: 49.175744},
+          zoom: 3,
+          styles: [
+            {elementType: 'geometry', stylers: [{color: '#90ee90'}]},
+            {elementType: 'labels.text.stroke', stylers: [{color: '#242f3e'}]},
+            {elementType: 'labels.text.fill', stylers: [{color: '#FFFFFF'}]},
+            {
+              featureType: 'administrative.locality',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#d59563'}]
+            },
+            {
+              featureType: 'poi',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#d59563'}]
+            },
+            {
+              featureType: 'poi.park',
+              elementType: 'geometry',
+              stylers: [{color: '#263c3f'}]
+            },
+            {
+              featureType: 'poi.park',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#6b9a76'}]
+            },
+            {
+              featureType: 'road',
+              elementType: 'geometry',
+              stylers: [{color: '#38414e'}]
+            },
+            {
+              featureType: 'road',
+              elementType: 'geometry.stroke',
+              stylers: [{color: '#212a37'}]
+            },
+            {
+              featureType: 'road',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#9ca5b3'}]
+            },
+            {
+              featureType: 'road.highway',
+              elementType: 'geometry',
+              stylers: [{color: '#746855'}]
+            },
+            {
+              featureType: 'road.highway',
+              elementType: 'geometry.stroke',
+              stylers: [{color: '#1f2835'}]
+            },
+            {
+              featureType: 'road.highway',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#f3d19c'}]
+            },
+            {
+              featureType: 'transit',
+              elementType: 'geometry',
+              stylers: [{color: '#2f3948'}]
+            },
+            {
+              featureType: 'transit.station',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#d59563'}]
+            },
+            {
+              featureType: 'water',
+              elementType: 'geometry',
+              stylers: [{color: '#17263c'}]
+            },
+            {
+              featureType: 'water',
+              elementType: 'labels.text.fill',
+              stylers: [{color: '#515c6d'}]
+            },
+            {
+              featureType: 'water',
+              elementType: 'labels.text.stroke',
+              stylers: [{color: '#17263c'}]
+            }
+          ]
+        }
+		);
+		
+		var Ireland = {lat: 53.350011, lng:  -6.260737};
+		var England = {lat: 51.743304, lng:  -0.603917};
+		var France = {lat: 48.856402, lng:  2.354395};
+		var Spain = {lat: 40.446734, lng:  -3.700110};
+		var America = {lat:40.347346, lng:-101.994930};
+		var Canada = {lat:57.908748, lng:-100.525130};
+       		var Andorra = {lat:42.742204, lng:1.480560};
+       		var Argentina = {lat:-34.999018, lng:-64.731764};
+       		var Austria = {lat:47.612883, lng:13.959137};
+       		var Australia = {lat:-26.684498, lng:134.382038};
+       		var Belgium = {lat:50.985408, lng:4.485755};
+       		var Bolivia = {lat:-16.977093, lng:-64.932539};
+       		var Brazil = {lat:-15.633599, lng:-47.798083};
+       		var Switzerland = {lat:47.442208, lng:8.484778};
+       		var Chile = {lat:-25.977589, lng:-71.853261};
+       		var Colombia = {lat:4.146066, lng:-73.747358};
+       		var Costarica = {lat:9.916188, lng:-84.185009};
+       		var Czechrep = {lat:50.277900, lng:14.555244};
+       		var Germany = {lat:52.654664, lng: 13.317016};
+       		var Denmark = {lat:55.653314, lng:12.160265};
+       		var Dominicanrep = {lat:18.630309, lng:-69.889442};
+       		var Ecuador = {lat:-0.182451, lng:-78.447113};
+       		var Estonia = {lat:59.393459, lng:24.740289};
+       		var Finland = {lat:61.647837, lng:24.762601};
+       		var Greece = {lat:38.091362, lng:23.488949};
+       		var Hongkong = {lat:22.336106, lng: 114.175696};
+       		var Honduras = {lat:13.978187, lng:-87.133830};
+       		var Hungary = {lat:47.407831, lng:19.018391}
+       		var Indonesia = {lat:-6.353805, lng:106.825160};
+       		var Israel = {lat:31.752361, lng:35.218635};
+       		var India = {lat:28.536766, lng:77.229182};
+       		var Iceland = {lat:64.137808, lng:-21.712529};
+       		var Italy = {lat:41.872871, lng:12.477478};
+       		var Japan = {lat:35.745441, lng:139.754989};
+       		var Lithuania = {lat:54.702673, lng:25.286618};
+       		var Latvia = {lat:56.941475, lng:24.116309};
+       		var Monaco = {lat:43.739884, lng: 7.426995};
+       		var Malta = {lat:35.882194, lng:14.450079};
+       		var Mexico = {lat:19.215520, lng:-99.255001};
+       		var Malaysia = {lat:3.192167, lng:101.664743};
+       		var Nicaragua = {lat:12.092624, lng:-86.244938};
+       		var Netherlands = {lat:52.415476, lng:4.883340};
+       		var Norway = {lat:60.021897, lng:10.746823};
+       		var Newzealand = {lat:-41.102474, lng:174.940613};
+       		var Panama = {lat:8.984240, lng:-79.551002};
+       		var Peru = {lat:-12.057389, lng:-77.035576};
+       		var Philippines = {lat:14.601032, lng:121.009408};
+       		var Poland = {lat:52.224753, lng:21.012738};
+       		var Portugal = {lat:38.731344, lng: -9.151855};
+       		var Paraguay = {lat:-25.287633, lng:-57.565704};
+       		var Romania = {lat:44.429966, lng:26.099358};
+       		var Sweden = {lat:59.337146, lng:18.059687};
+       		var Singapore = {lat:1.349592, lng:103.863597};
+       		var Slovakia = {lat:48.176039, lng:17.133466};
+       		var Elsalvador = {lat:13.716426, lng:-89.223421};
+       		var Thailand = {lat:13.732041, lng:100.525529};
+       		var Turkey = {lat:39.954795, lng:32.838139};
+       		var Taiwan = {lat:24.987282, lng:121.552550};
+       		var Uruguay = {lat:-34.862418, lng:-56.162877};
+       		var Vietnam = {lat:10.750586, lng:106.673539};
+       		var Southafrica = {lat:-26.030179, lng: 27.706332};
+			var Russia = {lat:63.023723, lng: 95.919436};
+			var China = {lat:37.925661, lng: 100.453622};
+
+       
+      var contentString1 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "us"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "us"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+
+      var contentString2 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "gb"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "gb"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString3 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ar"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ar"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString4 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "at"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "at"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString5 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "au"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "au"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString6 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "be"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "be"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString7 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "bg"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "bg"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString8 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "bo"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "bo"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString9 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "br"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "br"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString10 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ca"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ca"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString11 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ch"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ch"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString12 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "cl"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "cl"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString13 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "co"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "co"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString14 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "cr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "cr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString15 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "cz"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "cz"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString16 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "de"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "de"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString17 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "dk"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "dk"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString18 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "do"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "do"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString19 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ec"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ec"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString20 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ee"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ee"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString21 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "es"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "es"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString22 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "fi"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "fi"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString23 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "fr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "fr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString24 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "gr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "gr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString25 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "gt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "gt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString26 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "hk"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "hk"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString27 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "hn"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "hn"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString28 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "hu"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "hu"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString29 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "id"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "id"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString30 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ie"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ie"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString31 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "il"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "il"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString32 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "in"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "in"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString33 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "is"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "is"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString34 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "it"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "it"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString35 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "jp"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "jp"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString36 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "lt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "lt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString37 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "lu"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "lu"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString38 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "lv"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "lv"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString39 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "mt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "mt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString40 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "mx"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "mx"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString41 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "my"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "my"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString42 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ni"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ni"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString43 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "nl"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "nl"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString44 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "no"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "no"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString45 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "nz"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "nz"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString46 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "pa"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "pa"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString47 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "pe"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "pe"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString48 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ph"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ph"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString49 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "pt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "pt"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString50 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "py"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "py"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString51 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "ro"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "ro"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString52 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "se"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "se"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString53 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "sg"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "sg"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString54 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "sk"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "sk"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString55 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "sv"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "sv"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString56 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "th"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "th"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString57 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "tr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "tr"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString58 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "tw"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "tw"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString59 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "uy"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "uy"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString60 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "vn"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "vn"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString61 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+    '<li><a data-toggle="pill" href="#menu1">Concerts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "za"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+    '<div id="menu1" class="tab-pane fade">',
+      '<iframe src={% url "ticket" "za"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+      var contentString62 =[
+'<div class="container">',
+   '<ul class="nav nav-pills">',
+    '<li class="active"><a data-toggle="pill" href="#home">Charts</a></li>',
+  '</ul>',
+  
+  '<div class="tab-content">',
+    '<div id="home" class="tab-pane fade in active">',
+      '<iframe src={% url "marker" "global"%}?location="global" height="500" width="600"></iframe>',
+    '</div>',
+  '</div>',
+'</div>',
+].join('')
+
+
+
+
+
+     // var contentString2 = "<iframe src={% url 'marker' 'gb'%}?location='global' height='500' width='500'></iframe>";
+	//  var contentString5 = "<iframe src={% url 'ticket' 'ie'%}?location='global' height='700' width='600'></iframe>";
+
+         var infowindow = new google.maps.InfoWindow({
+          content: contentString30,
+          maxWidth: 1000
+        });
+
+        var marker = new google.maps.Marker({
+          position: Ireland,
+	 icon: '{% static 'png/Ireland32.png' %}',
+map: map, 
+					animation: google.maps.Animation.BOUNCE, 
+    });
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+        });
+	
+		var infowindow2 = new google.maps.InfoWindow({
+          content: contentString2,
+          maxWidth: 1000
+        });
+		
+		var marker2 = new google.maps.Marker({
+          position: England,
+ icon:  '{% static 'png/England32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE, 
+        });
+		marker2.addListener('click', function () {
+    infowindow2.open(map, marker2);
+		});
+
+		var infowindow3 = new google.maps.InfoWindow({
+          content: contentString23,
+          maxWidth: 1000
+        });
+
+        var marker3 = new google.maps.Marker({
+          position: France,
+ icon:  '{% static 'png/France32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+        marker3.addListener('click', function() {
+          infowindow3.open(map, marker3);
+        });
+		
+		var infowindow4 = new google.maps.InfoWindow({
+          content: contentString21,
+          maxWidth: 1000
+        });
+		
+		var marker4 = new google.maps.Marker({
+          position: Spain,
+ icon:  '{% static 'png/Spain32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		google.maps.event.addListener(marker4,'click', function () {
+    infowindow4.open(map, marker4);
+});
+
+	var infowindow5 = new google.maps.InfoWindow({
+          content: contentString1,
+          maxWidth: 1000
+        });
+
+        var marker5 = new google.maps.Marker({
+          position: America,
+ icon:  '{% static 'png/United-States64.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+        marker5.addListener('click', function() {
+          infowindow5.open(map, marker5);
+        });
+
+		var infowindow6 = new google.maps.InfoWindow({
+          content: contentString10,
+          maxWidth: 1000
+        });
+
+        var marker6 = new google.maps.Marker({
+          position: Canada,
+ icon:  '{% static 'png/Canada64.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+        marker6.addListener('click', function() {
+          infowindow6.open(map, marker6);
+        });
+		var infowindow7 = new google.maps.InfoWindow({
+          content: contentString16,
+          maxWidth: 1000
+        });
+		var marker7 = new google.maps.Marker({
+          position: Germany,
+ icon:  '{% static 'png/Germany32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker7.addListener('click', function () {
+    infowindow7.open(map, marker7);
+		});
+		var infowindow8 = new google.maps.InfoWindow({
+          content: contentString6,
+          maxWidth: 1000
+        });
+	var marker8 = new google.maps.Marker({
+          position: Belgium,
+ icon:  '{% static 'png/Belgium32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker8.addListener('click', function () {
+    infowindow8.open(map, marker8);
+		});
+   
+var infowindow9 = new google.maps.InfoWindow({
+          content: contentString11,
+          maxWidth: 1000
+        });
+var marker9 = new google.maps.Marker({
+          position: Switzerland,
+ icon:  '{% static 'png/Switzerland32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker9.addListener('click', function () {
+    infowindow9.open(map, marker9);
+		});
+		var infowindow10 = new google.maps.InfoWindow({
+          content: contentString21,
+          maxWidth: 1000
+        });
+var marker10 = new google.maps.Marker({
+          position: Andorra,
+ icon:  '{% static 'png/Andorra32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker10.addListener('click', function () {
+    infowindow10.open(map, marker10);
+		});
+		var infowindow11 = new google.maps.InfoWindow({
+          content: contentString5,
+          maxWidth: 1000
+        });
+var marker11 = new google.maps.Marker({
+          position: Australia,
+ icon:  '{% static 'png/Australia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker11.addListener('click', function () {
+    infowindow11.open(map, marker11);
+		});
+		var infowindow12 = new google.maps.InfoWindow({
+          content: contentString4,
+          maxWidth: 1000
+        });
+var marker12 = new google.maps.Marker({
+          position: Austria,
+ icon:  '{% static 'png/Austria32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker12.addListener('click', function () {
+    infowindow12.open(map, marker12);
+		});
+		var infowindow13 = new google.maps.InfoWindow({
+          content: contentString3,
+          maxWidth: 1000
+        });
+var marker13 = new google.maps.Marker({
+          position: Argentina,
+ icon:  '{% static 'png/Argentina32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker13.addListener('click', function () {
+    infowindow13.open(map, marker13);
+		});
+		var infowindow14 = new google.maps.InfoWindow({
+          content: contentString8,
+          maxWidth: 1000
+        });
+var marker14 = new google.maps.Marker({
+          position: Bolivia,
+ icon:  '{% static 'png/Bolivia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker14.addListener('click', function () {
+    infowindow14.open(map, marker14);
+		});
+		var infowindow15 = new google.maps.InfoWindow({
+          content: contentString12,
+          maxWidth: 1000
+        });
+var marker15 = new google.maps.Marker({
+          position: Chile,
+ icon:  '{% static 'png/Chile32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker15.addListener('click', function () {
+    infowindow15.open(map, marker15);
+		});
+		var infowindow16 = new google.maps.InfoWindow({
+          content: contentString13,
+          maxWidth: 1000
+        });
+var marker16 = new google.maps.Marker({
+          position: Colombia,
+ icon:  '{% static 'png/Colombia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker16.addListener('click', function () {
+    infowindow16.open(map, marker16);
+		});
+		var infowindow17 = new google.maps.InfoWindow({
+          content: contentString14,
+          maxWidth: 1000
+        });
+var marker17 = new google.maps.Marker({
+          position: Costarica,
+ icon:  '{% static 'png/Costa-Rica32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker17.addListener('click', function () {
+    infowindow17.open(map, marker17);
+		});
+		var infowindow18 = new google.maps.InfoWindow({
+          content: contentString15,
+          maxWidth: 1000
+        });
+var marker18 = new google.maps.Marker({
+          position: Czechrep,
+ icon:  '{% static 'png/Czech32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker18.addListener('click', function () {
+    infowindow18.open(map, marker18);
+		});
+		var infowindow19 = new google.maps.InfoWindow({
+          content: contentString17,
+          maxWidth: 1000
+        });
+var marker19 = new google.maps.Marker({
+          position: Denmark,
+ icon:  '{% static 'png/Denmark32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker19.addListener('click', function () {
+    infowindow19.open(map, marker19);
+		});
+		var infowindow20 = new google.maps.InfoWindow({
+          content: contentString18,
+          maxWidth: 1000
+        });
+var marker20 = new google.maps.Marker({
+          position: Dominicanrep,
+ icon:  '{% static 'png/Dominica-Republic32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker20.addListener('click', function () {
+    infowindow20.open(map, marker20);
+		});
+		var infowindow21 = new google.maps.InfoWindow({
+          content: contentString19,
+          maxWidth: 1000
+        });
+var marker21 = new google.maps.Marker({
+          position: Ecuador,
+ icon:  '{% static 'png/Ecuador32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker21.addListener('click', function () {
+    infowindow21.open(map, marker21);
+		});
+		var infowindow22 = new google.maps.InfoWindow({
+          content: contentString20,
+          maxWidth: 1000
+        });
+var marker22 = new google.maps.Marker({
+          position: Estonia,
+ icon:  '{% static 'png/Estonia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker22.addListener('click', function () {
+    infowindow22.open(map, marker22);
+		});
+		var infowindow23 = new google.maps.InfoWindow({
+          content: contentString22,
+          maxWidth: 1000
+        });
+var marker23 = new google.maps.Marker({
+          position: Finland,
+ icon:  '{% static 'png/Finland32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker23.addListener('click', function () {
+    infowindow23.open(map, marker23);
+		});
+
+	var infowindow24 = new google.maps.InfoWindow({
+          content: contentString24,
+          maxWidth: 1000
+        });
+
+var marker24 = new google.maps.Marker({
+          position: Greece,
+ icon:  '{% static 'png/Greece32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker24.addListener('click', function () {
+    infowindow24.open(map, marker24);
+		});
+		var infowindow25 = new google.maps.InfoWindow({
+          content: contentString26,
+          maxWidth: 1000
+        });
+var marker25 = new google.maps.Marker({
+          position: Hongkong,
+ icon:  '{% static 'png/Hongkong32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker25.addListener('click', function () {
+    infowindow25.open(map, marker25);
+		});
+		var infowindow26 = new google.maps.InfoWindow({
+          content: contentString27,
+          maxWidth: 1000
+        });
+var marker26 = new google.maps.Marker({
+          position: Honduras,
+ icon:  '{% static 'png/Honduras32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker26.addListener('click', function () {
+    infowindow26.open(map, marker26);
+		});
+		var infowindow27 = new google.maps.InfoWindow({
+          content: contentString28,
+          maxWidth: 1000
+        });
+var marker27 = new google.maps.Marker({
+          position: Hungary,
+ icon:  '{% static 'png/Hungary32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker27.addListener('click', function () {
+    infowindow27.open(map, marker27);
+		});
+		var infowindow28 = new google.maps.InfoWindow({
+          content: contentString29,
+          maxWidth: 1000
+        });
+var marker28 = new google.maps.Marker({
+          position: Indonesia,
+ icon:  '{% static 'png/Indonesia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker28.addListener('click', function () {
+    infowindow28.open(map, marker28);
+		});
+		var infowindow29 = new google.maps.InfoWindow({
+          content: contentString31,
+          maxWidth: 1000
+        });
+var marker29 = new google.maps.Marker({
+          position: Israel,
+ icon:  '{% static 'png/Israel32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker29.addListener('click', function () {
+    infowindow29.open(map, marker29);
+		});
+		var infowindow30 = new google.maps.InfoWindow({
+          content: contentString32,
+          maxWidth: 1000
+        });
+var marker30 = new google.maps.Marker({
+          position: India,
+ icon:  '{% static 'png/India32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker30.addListener('click', function () {
+    infowindow30.open(map, marker30);
+		});
+		var infowindow31 = new google.maps.InfoWindow({
+          content: contentString33,
+          maxWidth: 1000
+        });
+var marker31 = new google.maps.Marker({
+          position: Iceland,
+ icon:  '{% static 'png/Iceland32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker31.addListener('click', function () {
+    infowindow31.open(map, marker31);
+		});
+		var infowindow32 = new google.maps.InfoWindow({
+          content: contentString34,
+          maxWidth: 1000
+        });
+var marker32 = new google.maps.Marker({
+          position: Italy,
+ icon:  '{% static 'png/Italy32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker32.addListener('click', function () {
+    infowindow32.open(map, marker32);
+		});
+		var infowindow33 = new google.maps.InfoWindow({
+          content: contentString35,
+          maxWidth: 1000
+        });
+var marker33 = new google.maps.Marker({
+          position: Japan,
+ icon:  '{% static 'png/Japan32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker33.addListener('click', function () {
+    infowindow33.open(map, marker33);
+		});
+		var infowindow34 = new google.maps.InfoWindow({
+          content: contentString36,
+          maxWidth: 1000
+        });
+var marker34 = new google.maps.Marker({
+          position: Lithuania,
+ icon:  '{% static 'png/Lithuania32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker34.addListener('click', function () {
+    infowindow34.open(map, marker34);
+		});
+		var infowindow35 = new google.maps.InfoWindow({
+          content: contentString38,
+          maxWidth: 1000
+        });
+var marker35 = new google.maps.Marker({
+          position: Latvia,
+ icon:  '{% static 'png/Latvia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker35.addListener('click', function () {
+    infowindow35.open(map, marker35);
+		});
+		var infowindow36 = new google.maps.InfoWindow({
+          content: contentString51,
+          maxWidth: 1000
+        });
+var marker36 = new google.maps.Marker({
+          position: Monaco,
+ icon:  '{% static 'png/Monaco32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker36.addListener('click', function () {
+    infowindow36.open(map, marker36);
+		});
+		var infowindow37 = new google.maps.InfoWindow({
+          content: contentString39,
+          maxWidth: 1000
+        });
+
+	var marker37 = new google.maps.Marker({
+          position: Malta,
+ icon:  '{% static 'png/Malta32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker37.addListener('click', function () {
+    infowindow37.open(map, marker37);
+		});
+		var infowindow38 = new google.maps.InfoWindow({
+          content: contentString40,
+          maxWidth: 1000
+        });
+var marker38 = new google.maps.Marker({
+          position: Mexico,
+ icon:  '{% static 'png/Mexico32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker38.addListener('click', function () {
+    infowindow38.open(map, marker38);
+		});
+		var infowindow39 = new google.maps.InfoWindow({
+          content: contentString41,
+          maxWidth: 1000
+        });
+var marker39 = new google.maps.Marker({
+          position: Malaysia,
+ icon:  '{% static 'png/Malaysia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker39.addListener('click', function () {
+    infowindow39.open(map, marker39);
+		});
+		var infowindow40 = new google.maps.InfoWindow({
+          content: contentString42,
+          maxWidth: 1000
+        });
+var marker40 = new google.maps.Marker({
+          position: Nicaragua,
+ icon:  '{% static 'png/Nicaragua32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker40.addListener('click', function () {
+    infowindow40.open(map, marker40);
+		});
+		var infowindow41 = new google.maps.InfoWindow({
+          content: contentString43,
+          maxWidth: 1000
+        });
+var marker41 = new google.maps.Marker({
+          position: Netherlands,
+ icon:  '{% static 'png/Netherlands32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker41.addListener('click', function () {
+    infowindow41.open(map, marker41);
+		});
+		var infowindow42 = new google.maps.InfoWindow({
+          content: contentString44,
+          maxWidth: 1000
+        });
+var marker42 = new google.maps.Marker({
+          position: Norway,
+ icon:  '{% static 'png/Norway32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker42.addListener('click', function () {
+    infowindow42.open(map, marker42);
+		});
+		var infowindow43 = new google.maps.InfoWindow({
+          content: contentString45,
+          maxWidth: 1000
+        });
+var marker43 = new google.maps.Marker({
+          position: Newzealand,
+ icon:  '{% static 'png/New-Zealand32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker43.addListener('click', function () {
+    infowindow43.open(map, marker43);
+		});
+		var infowindow44 = new google.maps.InfoWindow({
+          content: contentString45,
+          maxWidth: 1000
+        });
+var marker44 = new google.maps.Marker({
+          position: Panama,
+ icon:  '{% static 'png/Panama32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker44.addListener('click', function () {
+    infowindow44.open(map, marker44);
+		});
+		var infowindow45 = new google.maps.InfoWindow({
+          content: contentString46,
+          maxWidth: 1000
+        });
+var marker45 = new google.maps.Marker({
+          position: Peru,
+ icon:  '{% static 'png/Peru32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker45.addListener('click', function () {
+    infowindow45.open(map, marker45);
+		});
+		var infowindow46 = new google.maps.InfoWindow({
+          content: contentString47,
+          maxWidth: 1000
+        });
+var marker46 = new google.maps.Marker({
+          position: Philippines,
+ icon:  '{% static 'png/Philippines32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker46.addListener('click', function () {
+    infowindow46.open(map, marker46);
+		});
+		var infowindow47 = new google.maps.InfoWindow({
+          content: contentString48,
+          maxWidth: 1000
+        });
+var marker47 = new google.maps.Marker({
+          position: Poland,
+ icon:  '{% static 'png/Poland32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker47.addListener('click', function () {
+    infowindow47.open(map, marker47);
+		});
+		var infowindow48 = new google.maps.InfoWindow({
+          content: contentString49,
+          maxWidth: 1000
+        });
+var marker48 = new google.maps.Marker({
+          position: Portugal,
+ icon:  '{% static 'png/Portugal32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker48.addListener('click', function () {
+    infowindow48.open(map, marker48);
+		});
+		var infowindow49 = new google.maps.InfoWindow({
+          content: contentString50,
+          maxWidth: 1000
+        });
+var marker49 = new google.maps.Marker({
+          position: Paraguay,
+ icon:  '{% static 'png/Paraguay32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker49.addListener('click', function () {
+    infowindow49.open(map, marker49);
+		});
+		var infowindow50 = new google.maps.InfoWindow({
+          content: contentString51,
+          maxWidth: 1000
+        });
+var marker50 = new google.maps.Marker({
+          position: Romania,
+ icon:  '{% static 'png/Romania32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker50.addListener('click', function () {
+    infowindow50.open(map, marker50);
+		});
+		var infowindow51 = new google.maps.InfoWindow({
+          content: contentString52,
+          maxWidth: 1000
+        });
+var marker51 = new google.maps.Marker({
+          position: Sweden,
+ icon:  '{% static 'png/Sweden32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker51.addListener('click', function () {
+    infowindow51.open(map, marker51);
+		});
+		var infowindow52 = new google.maps.InfoWindow({
+          content: contentString53,
+          maxWidth: 1000
+        });
+var marker52 = new google.maps.Marker({
+          position: Singapore,
+ icon:  '{% static 'png/Singapore32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker52.addListener('click', function () {
+    infowindow52.open(map, marker52);
+		});
+		var infowindow53 = new google.maps.InfoWindow({
+          content: contentString54,
+          maxWidth: 1000
+        });
+var marker53 = new google.maps.Marker({
+          position: Slovakia,
+ icon:  '{% static 'png/Slovakia32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker53.addListener('click', function () {
+    infowindow53.open(map, marker53);
+		});
+		var infowindow54 = new google.maps.InfoWindow({
+          content: contentString55,
+          maxWidth: 1000
+        });
+var marker54 = new google.maps.Marker({
+          position: Elsalvador,
+ icon:  '{% static 'png/Elsalvador32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker54.addListener('click', function () {
+    infowindow54.open(map, marker54);
+		});
+		var infowindow55 = new google.maps.InfoWindow({
+          content: contentString56,
+          maxWidth: 1000
+        });
+var marker55 = new google.maps.Marker({
+          position: Thailand,
+ icon:  '{% static 'png/Thailand32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker55.addListener('click', function () {
+    infowindow55.open(map, marker55);
+		});
+		var infowindow56 = new google.maps.InfoWindow({
+          content: contentString57,
+          maxWidth: 1000
+        });
+var marker56 = new google.maps.Marker({
+          position: Turkey,
+ icon:  '{% static 'png/Turkey32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker56.addListener('click', function () {
+    infowindow56.open(map, marker56);
+		});
+		var infowindow57 = new google.maps.InfoWindow({
+          content: contentString58,
+          maxWidth: 1000
+        });
+var marker57 = new google.maps.Marker({
+          position: Taiwan,
+ icon:  '{% static 'png/Taiwan32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker57.addListener('click', function () {
+    infowindow57.open(map, marker57);
+		});
+		var infowindow58 = new google.maps.InfoWindow({
+          content: contentString59,
+          maxWidth: 1000
+        });
+var marker58 = new google.maps.Marker({
+          position: Uruguay,
+ icon:  '{% static 'png/Uruguay32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker58.addListener('click', function () {
+    infowindow58.open(map, marker58);
+		});
+		var infowindow59 = new google.maps.InfoWindow({
+          content: contentString60,
+          maxWidth: 1000
+        });
+var marker59 = new google.maps.Marker({
+          position: Vietnam,
+ icon:  '{% static 'png/Vietnam32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker59.addListener('click', function () {
+    infowindow59.open(map, marker59);
+		});
+		var infowindow60 = new google.maps.InfoWindow({
+          content: contentString61,
+          maxWidth: 1000
+        });
+var marker60 = new google.maps.Marker({
+          position: Southafrica,
+ icon:  '{% static 'png/South-Africa32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker60.addListener('click', function () {
+    infowindow60.open(map, marker60);
+		});
+		var infowindow61 = new google.maps.InfoWindow({
+          content: contentString9,
+          maxWidth: 1000
+        });
+var marker61 = new google.maps.Marker({
+          position: Brazil,
+ icon:  '{% static 'png/Brazil32.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker61.addListener('click', function () {
+    infowindow61.open(map, marker61);
+		});
+				var infowindow62 = new google.maps.InfoWindow({
+          content: contentString62,
+          maxWidth: 1000
+        });
+		var marker62 = new google.maps.Marker({
+          position: Russia,
+ icon:  '{% static 'png/Russia64.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker62.addListener('click', function () {
+    infowindow62.open(map, marker62);
+		});
+		var marker63 = new google.maps.Marker({
+          position: China,
+ icon:  '{% static 'png/China64.png' %}',
+          map: map, 
+					animation: google.maps.Animation.BOUNCE
+        });
+		marker63.addListener('click', function () {
+    infowindow62.open(map, marker63);
+		});
+
+        // Create the search box and link it to the UI element.
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          searchBox.setBounds(map.getBounds());
+        });
+
+        var markers = [];
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+           
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+      }
+    var modal = document.getElementById("myModal");
+var btn = document.getElementById("myBtn");
+
+var span = document.getElementsByClassName("close")[0];
+
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCe8oJ24mhN1dx8cHybUgsoSzwpQwlWpkY&libraries=places&callback=initAutocomplete"
+         async defer></script>
+  </body>
+</html>
